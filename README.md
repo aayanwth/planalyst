@@ -24,10 +24,8 @@ Medallion architecture (Bronze → Silver → Gold), orchestrated end-to-end by 
 
 <img width="750" height="766" alt="Screenshot 2026-08-25 211514" src="https://github.com/user-attachments/assets/fa2049ac-710f-4758-813f-f8e9addb5196" />
 
-
-Orchestration split into **two Dagster jobs**:
-- `matchweek_pipeline` — automated, re-run every matchweek (ingestion → GE checks → dbt → NLP scoring → model *scoring*).
-- `model_training_job` — manually triggered only, since model *training* on historical data doesn't need to run every matchweek.
+Orchestration consists of a single unified Dagster job:
+- `matchweek_pipeline` — automated, re-run every matchweek (ingestion → GE checks → dbt → NLP scoring → model *training* → model *scoring*). The model is retrained on the latest data every matchweek before generating new predictions.
 
 ---
 
@@ -162,16 +160,13 @@ SELECT * FROM pg_extension WHERE extname = 'vector';
 pip install -e .
 ```
 
-### 4. Run the live matchweek pipeline (Dagster)
+### 4. Run the automated matchweek pipeline (Dagster)
 ```bash
 dagster dev -f planalyst/dagster_assets/definitions.py
 ```
-Trigger the `matchweek_pipeline` job from the Dagster UI (or CLI) to run ingestion → Great Expectations checks → dbt → NLP scoring → model scoring, end to end.
+Trigger the `matchweek_pipeline` job from the Dagster UI (or CLI) to run ingestion → Great Expectations checks → dbt → NLP scoring → model training → model scoring, end to end.
 
-### 5. Train the predictive model (manual, occasional)
-Trigger the separate `model_training_job` in Dagster to ingest historical seasons, engineer features, train the model, and log everything to MLflow.
-
-### 6. Serve the API
+### 5. Serve the API
 ```bash
 uvicorn planalyst.api.main:app --reload
 ```
@@ -184,7 +179,7 @@ Available endpoints:
 | `GET /matchweek/{n}/summary` | League-wide sentiment vs results for that week |
 | `GET /predictions/title` | Current title-winner probability per team |
 
-### 7. Launch the dashboard
+### 6. Launch the dashboard
 ```bash
 streamlit run streamlit_app/app.py
 ```
