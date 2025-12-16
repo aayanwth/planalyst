@@ -1,0 +1,50 @@
+# =============================================================
+# PLanalyst — Docker Compose (development)
+# =============================================================
+# Quick way to spin up all services locally.
+# For production-like provisioning, use terraform/ instead.
+# =============================================================
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: planalyst-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: planalyst
+      POSTGRES_PASSWORD: planalyst_dev
+      POSTGRES_DB: planalyst
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U planalyst -d planalyst"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.14.0
+    container_name: planalyst-mlflow
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      MLFLOW_BACKEND_STORE_URI: postgresql+psycopg2://planalyst:planalyst_dev@postgres:5432/planalyst
+    command: >
+      mlflow server
+      --backend-store-uri postgresql+psycopg2://planalyst:planalyst_dev@postgres:5432/planalyst
+      --default-artifact-root /mlflow-artifacts
+      --host 0.0.0.0
+      --port 5000
+    volumes:
+      - mlflow_artifacts:/mlflow-artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  mlflow_artifacts:

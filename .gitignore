@@ -1,0 +1,59 @@
+# =============================================================
+# PLanalyst .gitignore
+# =============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# --- Environment ---
+.env
+.env.local
+
+# --- Terraform ---
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
+terraform/pgdata/
+
+# --- MLflow ---
+mlruns/
+mlartifacts/
+mlflow-artifacts/
+
+# --- dbt ---
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
+# --- Great Expectations ---
+great_expectations/uncommitted/
+great_expectations/data_docs/
+
+# --- dlt ---
+.dlt/secrets.toml
+*.dlt/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Dagster ---
+.dagster/
+storage/

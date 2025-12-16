@@ -1,0 +1,10 @@
+# =============================================================
+# PLanalyst — Terraform Variables (example values)
+# Copy to terraform.tfvars and customize if needed
+# =============================================================
+
+postgres_user     = "planalyst"
+postgres_password = "planalyst_dev"
+postgres_db       = "planalyst"
+postgres_port     = 5432
+container_name    = "planalyst-postgres"
