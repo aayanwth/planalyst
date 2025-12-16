@@ -1,5 +1,5 @@
 [README.md](https://github.com/user-attachments/files/31426952/README.md)
-# ⚽ PLPulse — Premier League News Sentiment vs Match Outcome Pipeline
+# ⚽ PLanalyst — Premier League News Sentiment vs Match Outcome Pipeline
 
 An end-to-end data pipeline that ingests **Premier League match results** and **football news/media coverage**, runs **NLP sentiment analysis** on that coverage, and links sentiment to match outcomes and team performance — surfaced through an interactive dashboard with a **title-race prediction model**.
 
