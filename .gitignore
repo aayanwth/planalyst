@@ -34,6 +34,7 @@ mlflow-artifacts/
 dbt_project/target/
 dbt_project/dbt_packages/
 dbt_project/logs/
+dbt_project/.user.yml
 
 # --- Great Expectations ---
 great_expectations/uncommitted/
@@ -57,3 +58,9 @@ desktop.ini
 # --- Dagster ---
 .dagster/
 storage/
+
+# --- Local tooling / artifacts ---
+.claude/
+skills-lock.json
+models/*.joblib
+*.egg-info/

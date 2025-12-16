@@ -11,7 +11,7 @@ services:
     container_name: planalyst-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: planalyst
       POSTGRES_PASSWORD: planalyst_dev
@@ -26,19 +26,24 @@ services:
       retries: 10
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.14.0
+    image: ghcr.io/mlflow/mlflow:v3.16.1
     container_name: planalyst-mlflow
     restart: unless-stopped
     ports:
       - "5000:5000"
     environment:
       MLFLOW_BACKEND_STORE_URI: postgresql+psycopg2://planalyst:planalyst_dev@postgres:5432/planalyst
+    # The stock image has no Postgres driver; install it first.
+    # --serve-artifacts proxies artifact uploads so host clients don't need the volume path.
     command: >
+      sh -c "pip install --quiet psycopg2-binary &&
+      mlflow db upgrade postgresql+psycopg2://planalyst:planalyst_dev@postgres:5432/planalyst &&
       mlflow server
       --backend-store-uri postgresql+psycopg2://planalyst:planalyst_dev@postgres:5432/planalyst
-      --default-artifact-root /mlflow-artifacts
+      --serve-artifacts
+      --artifacts-destination /mlflow-artifacts
       --host 0.0.0.0
-      --port 5000
+      --port 5000"
     volumes:
       - mlflow_artifacts:/mlflow-artifacts
     depends_on:
