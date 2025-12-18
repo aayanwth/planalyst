@@ -1,0 +1,16 @@
+# =============================================================
+# PLanalyst — dbt Profiles (local development)
+# =============================================================
+
+planalyst:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      user: "{{ env_var('POSTGRES_USER', 'planalyst') }}"
+      pass: "{{ env_var('POSTGRES_PASSWORD', 'planalyst_dev') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'planalyst') }}"
+      schema: public
+      threads: 4

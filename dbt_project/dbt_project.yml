@@ -1,0 +1,34 @@
+# =============================================================
+# PLanalyst — dbt Project Configuration
+# =============================================================
+
+name: "planalyst_dbt"
+version: "1.0.0"
+config-version: 2
+
+profile: "planalyst"
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# --- Model-level configurations ---
+models:
+  planalyst_dbt:
+    silver:
+      +schema: silver
+      +materialized: view
+    gold:
+      +schema: gold
+      +materialized: table
+
+seeds:
+  planalyst_dbt:
+    +schema: silver

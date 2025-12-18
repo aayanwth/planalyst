@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: silver_matches
+    description: "Cleaned and deduplicated PL match data with standardized team names and computed results/points."
+    columns:
+      - name: id
+        description: "Match ID from football-data.org"
+        tests:
+          - unique
+          - not_null
+      - name: home_team
+        description: "Canonical home team name"
+        tests:
+          - not_null
+      - name: away_team
+        description: "Canonical away team name"
+        tests:
+          - not_null
+      - name: matchday
+        description: "Matchweek number (1-38)"
+        tests:
+          - not_null
+      - name: home_goals
+        description: "Goals scored by home team"
+      - name: away_goals
+        description: "Goals scored by away team"
+      - name: home_result
+        description: "W/D/L from home team perspective"
+      - name: away_result
+        description: "W/D/L from away team perspective"
+      - name: home_points
+        description: "Points earned by home team (3/1/0)"
+      - name: away_points
+        description: "Points earned by away team (3/1/0)"
+
+  - name: silver_news_articles
+    description: "Cleaned news articles with standardized team names matching silver_matches."
+    columns:
+      - name: article_url
+        description: "Article URL (unique identifier)"
+        tests:
+          - unique
+          - not_null
+      - name: title
+        description: "Article headline"
+        tests:
+          - not_null
+      - name: team_name
+        description: "Canonical team name (matches silver_matches.home_team / away_team)"
+        tests:
+          - not_null
+      - name: published_at
+        description: "Publication timestamp"

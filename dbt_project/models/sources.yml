@@ -1,0 +1,71 @@
+# PLanalyst — dbt sources: Bronze layer raw tables
+# These are the raw tables populated by dlt ingestion pipelines.
+
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    description: "Raw ingestion tables from dlt pipelines"
+    tables:
+      - name: raw_matches
+        description: "Raw Premier League match data from football-data.org API"
+        columns:
+          - name: id
+            description: "Match ID from football-data.org"
+          - name: matchday
+            description: "Matchweek number (1-38)"
+          - name: home_team_name
+            description: "Home team name as returned by the API"
+          - name: away_team_name
+            description: "Away team name as returned by the API"
+          - name: home_team_id
+            description: "Home team ID from football-data.org"
+          - name: away_team_id
+            description: "Away team ID from football-data.org"
+          - name: score_home
+            description: "Goals scored by home team (null if not played)"
+          - name: score_away
+            description: "Goals scored by away team (null if not played)"
+          - name: status
+            description: "Match status: SCHEDULED, LIVE, IN_PLAY, PAUSED, FINISHED, etc."
+          - name: utc_date
+            description: "Match kickoff datetime in UTC"
+          - name: season
+            description: "Season start year (e.g. 2026)"
+
+      - name: raw_news_articles
+        description: "Raw news articles from NewsAPI related to PL teams"
+        columns:
+          - name: url
+            description: "Article URL (used as primary key for deduplication)"
+          - name: title
+            description: "Article headline"
+          - name: description
+            description: "Article summary/description"
+          - name: content
+            description: "Article body content (may be truncated by free tier)"
+          - name: source_name
+            description: "News source name (e.g. BBC Sport)"
+          - name: published_at
+            description: "Publication datetime in ISO format"
+          - name: team_query
+            description: "Team name used as the search query"
+
+  - name: silver
+    schema: silver
+    description: "Cleaned and scored tables"
+    tables:
+      - name: silver_sentiment_scores
+        description: "NLP sentiment scores for news articles"
+        columns:
+          - name: article_url
+            description: "Foreign key to silver_news_articles"
+          - name: sentiment_label
+            description: "POSITIVE, NEUTRAL, or NEGATIVE"
+          - name: sentiment_score
+            description: "Confidence score (0-1)"
+          - name: model_name
+            description: "HuggingFace model used for scoring"
+          - name: scored_at
+            description: "Timestamp of scoring run"

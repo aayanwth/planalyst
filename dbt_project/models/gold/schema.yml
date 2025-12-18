@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: dim_team
+    description: "Dimension table for all Premier League teams in the 2026-27 season."
+    columns:
+      - name: team_key
+        description: "Surrogate key"
+        tests:
+          - unique
+          - not_null
+      - name: team_name
+        description: "Canonical team name"
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_matchweek
+    description: "Dimension table for matchweeks with date ranges and completion status."
+    columns:
+      - name: matchweek_key
+        description: "Matchweek number (1-38), also serves as surrogate key"
+        tests:
+          - unique
+          - not_null
+      - name: matchweek_number
+        description: "Matchweek number (1-38)"
+        tests:
+          - not_null
+
+  - name: fact_team_sentiment_performance
+    description: >
+      Fact table: one row per team per matchweek.
+      Combines match results (W/D/L, goals, points) with news sentiment scores.
+      Includes cumulative standings (running total of points and GD).
+    columns:
+      - name: team_name
+        description: "Canonical team name (FK to dim_team)"
+        tests:
+          - not_null
+      - name: matchweek_number
+        description: "Matchweek number (FK to dim_matchweek)"
+        tests:
+          - not_null
+      - name: result
+        description: "Match result: W (win), D (draw), L (loss)"
+      - name: goals_for
+        description: "Goals scored by this team"
+      - name: goals_against
+        description: "Goals conceded by this team"
+      - name: points
+        description: "Points earned this matchweek (3/1/0)"
+      - name: avg_sentiment_score
+        description: "Average sentiment score for this team this matchweek (-1 to +1)"
+      - name: article_count
+        description: "Number of news articles about this team this matchweek"
+      - name: cumulative_points
+        description: "Running total of points up to this matchweek"
+      - name: cumulative_gd
+        description: "Running total of goal difference up to this matchweek"
