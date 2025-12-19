@@ -45,7 +45,6 @@ Orchestration consists of a single unified Dagster job:
 | Visualization | Streamlit |
 | Infra as Code | Terraform |
 
-> Airflow, Snowflake, Soda Core, and Power BI are intentionally **not** used — this project uses a distinct stack from prior work.
 
 ---
 
@@ -63,7 +62,8 @@ Orchestration consists of a single unified Dagster job:
 
 ```
 .
-├── PLPulse_project_brief.md      # Original project requirements/task list
+├── docs/project_brief.md         # Original project requirements/task list
+├── scripts/                      # Ad-hoc check/diagnostic scripts
 ├── docker-compose.yml            # Local Postgres (pgvector enabled)
 ├── init-db.sql                   # Creates bronze/silver/gold/training schemas + vector extension
 ├── pyproject.toml                # Python deps: dlt, dbt, dagster, fastapi, streamlit, xgboost, ...
