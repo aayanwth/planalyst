@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, text
-from planalyst.config import POSTGRES_CONNECTION_STRING
+from planalyst.config import SQLALCHEMY_CONNECTION_STRING
 
-e = create_engine(POSTGRES_CONNECTION_STRING)
+e = create_engine(SQLALCHEMY_CONNECTION_STRING)
 with e.connect() as c:
     print("=== pgvector ===")
     print(c.execute(text("SELECT extname, extversion FROM pg_extension WHERE extname='vector'")).fetchall())

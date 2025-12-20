@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine, text
 
-from planalyst.config import POSTGRES_CONNECTION_STRING
+from planalyst.config import SQLALCHEMY_CONNECTION_STRING
 from planalyst.nlp.sentiment import log_to_mlflow
 
-engine = create_engine(POSTGRES_CONNECTION_STRING)
+engine = create_engine(SQLALCHEMY_CONNECTION_STRING)
 with engine.connect() as conn:
     conn.execute(text("ALTER TABLE gold.gold_title_predictions ADD COLUMN IF NOT EXISTS model_version TEXT"))
     conn.execute(text("UPDATE gold.gold_title_predictions SET model_version = COALESCE(model_version, 'xgb_v2')"))
