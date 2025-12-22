@@ -1,7 +1,9 @@
 # =============================================================
 # PLanalyst — Docker Compose (development)
 # =============================================================
-# Quick way to spin up all services locally.
+# Quick way to spin up Postgres, MLflow, the API and the dashboard locally.
+# The Dagster pipeline runs on the host (see README); host ports are overridable via
+# POSTGRES_PORT / API_PORT / DASHBOARD_PORT if 5432 / 8000 / 8501 are taken.
 # For production-like provisioning, use terraform/ instead.
 # =============================================================
 
@@ -14,7 +16,7 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: planalyst
-      POSTGRES_PASSWORD: planalyst_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-planalyst_dev}
       POSTGRES_DB: planalyst
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -32,14 +34,14 @@ services:
     ports:
       - "5000:5000"
     environment:
-      MLFLOW_BACKEND_STORE_URI: postgresql+psycopg2://planalyst:planalyst_dev@postgres:5432/planalyst
+      MLFLOW_BACKEND_STORE_URI: postgresql+psycopg2://planalyst:${POSTGRES_PASSWORD:-planalyst_dev}@postgres:5432/planalyst
     # The stock image has no Postgres driver; install it first.
     # --serve-artifacts proxies artifact uploads so host clients don't need the volume path.
     command: >
       sh -c "pip install --quiet psycopg2-binary &&
-      mlflow db upgrade postgresql+psycopg2://planalyst:planalyst_dev@postgres:5432/planalyst &&
+      mlflow db upgrade postgresql+psycopg2://planalyst:${POSTGRES_PASSWORD:-planalyst_dev}@postgres:5432/planalyst &&
       mlflow server
-      --backend-store-uri postgresql+psycopg2://planalyst:planalyst_dev@postgres:5432/planalyst
+      --backend-store-uri postgresql+psycopg2://planalyst:${POSTGRES_PASSWORD:-planalyst_dev}@postgres:5432/planalyst
       --serve-artifacts
       --artifacts-destination /mlflow-artifacts
       --host 0.0.0.0
@@ -48,6 +50,40 @@ services:
       - mlflow_artifacts:/mlflow-artifacts
     depends_on:
       postgres:
+        condition: service_healthy
+
+  # --- Serving layer -------------------------------------------------------------
+  # Reads the Gold tables that the Dagster pipeline produces; it does not run the pipeline.
+  api:
+    build:
+      context: .
+      target: api
+    container_name: planalyst-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: planalyst
+      POSTGRES_USER: planalyst
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-planalyst_dev}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: .
+      target: dashboard
+    container_name: planalyst-dashboard
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_PORT:-8501}:8501"
+    environment:
+      PLANALYST_API_URL: http://api:8000
+    depends_on:
+      api:
         condition: service_healthy
 
 volumes:

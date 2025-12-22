@@ -1,0 +1,16 @@
+.git
+.venv
+.env
+__pycache__
+*.egg-info
+data
+mlruns
+models
+tests
+terraform
+dbt_project/target
+dbt_project/logs
+great_expectations/uncommitted
+docs/*
+!docs/model_evaluation.md
+!docs/img

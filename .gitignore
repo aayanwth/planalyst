@@ -64,3 +64,9 @@ storage/
 skills-lock.json
 models/*.joblib
 *.egg-info/
+data/
+.coverage
+htmlcov/
+
+# Impeccable design-review captures
+.impeccable/review/
