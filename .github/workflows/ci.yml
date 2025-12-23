@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    name: Lint and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install (core + ml + api + ingestion + dev extras)
+        run: pip install -e ".[ml,api,ingestion,dev]"
+      - name: Lint
+        run: ruff check .
+      - name: Tests (the Postgres-backed and Dagster tests skip themselves here)
+        run: pytest --cov=planalyst --cov-report=term --cov-fail-under=55
+
+  integration:
+    name: dbt + Dagster against Postgres
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: planalyst
+          POSTGRES_PASSWORD: planalyst_dev
+          POSTGRES_DB: planalyst
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U planalyst"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PLANALYST_TEST_PG: localhost:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install (everything the orchestration and dbt tests need)
+        run: pip install -e ".[ml,api,ingestion,orchestration,dev]" "dbt-postgres>=1.8.0"
+      - name: Full test suite, including the dbt build on a hand-made league
+        run: pytest -v
+      - name: dbt project parses
+        run: dbt parse --project-dir dbt_project --profiles-dir dbt_project
+      - name: Dagster definitions are valid
+        run: dagster definitions validate -f planalyst/dagster_assets/definitions.py
+
+  docker:
+    name: Docker images build and compose file is valid
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config -q
+      - run: docker build --target api -t planalyst-api .
+      - run: docker build --target dashboard -t planalyst-dashboard .
