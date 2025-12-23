@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-06T00:00:00Z",
+  "title": "Design System: PLanalyst",
+  "extensions": {
+    "colorMeta": {
+      "midnight-enamel": { "role": "neutral", "displayName": "Midnight Enamel", "canonical": "#0A1128", "tonalRamp": ["#0A1128", "#0F1A3B", "#152349", "#22345F", "#35508F", "#8D9EC6", "#B4C2E0", "#F2F5FC"] },
+      "panel-enamel": { "role": "neutral", "displayName": "Panel Enamel", "canonical": "#0F1A3B", "tonalRamp": ["#0A1128", "#0F1A3B", "#152349", "#22345F", "#35508F", "#8D9EC6", "#B4C2E0", "#F2F5FC"] },
+      "raised-enamel": { "role": "neutral", "displayName": "Raised Enamel", "canonical": "#152349", "tonalRamp": ["#0A1128", "#0F1A3B", "#152349", "#22345F", "#35508F", "#8D9EC6", "#B4C2E0", "#F2F5FC"] },
+      "porcelain-selection": { "role": "primary", "displayName": "Porcelain Selection", "canonical": "#EAF0FF", "tonalRamp": ["#22345F", "#35508F", "#5A6E9F", "#8D9EC6", "#B4C2E0", "#D3DDF5", "#EAF0FF", "#F2F5FC"] },
+      "ink-orange": { "role": "secondary", "displayName": "Orange Line", "canonical": "#d95926", "tonalRamp": ["#5a2410", "#7d3216", "#a0401c", "#c04b22", "#d95926", "#e47c50", "#ec9e7d", "#f4c3ae"] },
+      "ink-aqua": { "role": "secondary", "displayName": "Aqua Line", "canonical": "#199e70", "tonalRamp": ["#0a3f2d", "#0f5b41", "#147a57", "#199e70", "#4cb590", "#7dcab0", "#a8dccb", "#d0eee4"] },
+      "ink-amber": { "role": "secondary", "displayName": "Amber Line", "canonical": "#c98500", "tonalRamp": ["#4f3400", "#6e4900", "#905f00", "#c98500", "#d9a233", "#e5bb66", "#efd196", "#f7e6c6"] },
+      "ink-magenta": { "role": "secondary", "displayName": "Magenta Line", "canonical": "#d55181", "tonalRamp": ["#5a1a30", "#7c2545", "#a1335b", "#d55181", "#df7599", "#e99ab3", "#f1bdcd", "#f8dde6"] },
+      "ink-violet": { "role": "secondary", "displayName": "Violet Line", "canonical": "#9085e9", "tonalRamp": ["#2f2a6d", "#433c93", "#5e55bf", "#7a70de", "#9085e9", "#aba3f0", "#c6c0f5", "#e2dffa"] },
+      "sentiment-positive": { "role": "tertiary", "displayName": "Cobalt Positive", "canonical": "#4C86F0", "tonalRamp": ["#10285a", "#18408d", "#2559c4", "#3b72e3", "#4C86F0", "#7ba6f5", "#a5c1f8", "#cddcfb"] },
+      "sentiment-negative": { "role": "tertiary", "displayName": "Scarlet Negative", "canonical": "#e66767", "tonalRamp": ["#5a1a1a", "#7f2626", "#a43737", "#c54f4f", "#e66767", "#ed8888", "#f3aaaa", "#f9cfcf"] },
+      "status-win": { "role": "tertiary", "displayName": "Win Green", "canonical": "#0ca30c", "tonalRamp": ["#033a03", "#055605", "#087408", "#0ca30c", "#3bb73b", "#6fcb6f", "#9ddc9d", "#cdeece"] },
+      "status-draw": { "role": "tertiary", "displayName": "Draw Gold", "canonical": "#fab219", "tonalRamp": ["#5a3e00", "#845c00", "#b07d00", "#d99a0a", "#fab219", "#fbc54f", "#fcd883", "#fdebbb"] },
+      "status-loss": { "role": "tertiary", "displayName": "Loss Red", "canonical": "#d03b3b", "tonalRamp": ["#4f1111", "#731a1a", "#982626", "#b83232", "#d03b3b", "#dd6666", "#e89292", "#f3c1c1"] }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Page Title", "purpose": "One per page, 1.75rem, weight 650." },
+      "stat": { "displayName": "Stat Value", "purpose": "Headline figure in the stat strip; counts up on load." },
+      "heading": { "displayName": "Panel Heading", "purpose": "Panel titles and h2/h3." },
+      "body": { "displayName": "Body", "purpose": "Paragraph and label text in text-2." },
+      "label": { "displayName": "Label", "purpose": "Chips, stat labels, notes, legends, captions." }
+    },
+    "shadows": [
+      { "name": "follow-glow", "value": "0 0 12px rgba(ink, 0.7)", "purpose": "Bar glow behind the followed club's ranked bar; roundel uses 0 0 14px at 0.8." },
+      { "name": "station-ring", "value": "0 0 0 3px #0F1A3B", "purpose": "Panel-coloured ring that lets a roundel read as a station on the route." },
+      { "name": "live-pulse", "value": "0 0 0 6px rgba(47,191,113,0)", "purpose": "Expanding ring on the API-connected status dot." },
+      { "name": "slider-halo", "value": "0 0 0 4px rgba(234,240,255,0.18)", "purpose": "Porcelain halo on the slider thumb." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "All state transitions, 160 to 200ms." },
+      { "name": "bar-grow", "value": "800ms var(--ease)", "purpose": "Ranked bars scale in from the left." },
+      { "name": "count-up", "value": "1100ms var(--ease)", "purpose": "Stat integers count up via CSS counters. All motion is disabled under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "640px" },
+      { "name": "tablet", "value": "768px" },
+      { "name": "stats-collapse", "value": "900px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Bordered enamel panel with title and note row. Never nested.",
+      "html": "<div class=\"ds-panel\"><div class=\"ds-panel-head\"><span class=\"ds-panel-title\">Title odds</span><span class=\"ds-panel-note\">Season 2026-27</span></div><p style=\"margin:8px 0 0\">Panel content</p></div>",
+      "css": ".ds-panel { background: #0F1A3B; border: 1px solid #22345F; border-radius: 14px; padding: 10px 16px 14px; color: #B4C2E0; font-size: 0.94rem; transition: border-color 200ms cubic-bezier(0.22,1,0.36,1); } .ds-panel:hover { border-color: #35508F; } .ds-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 6px 0 2px; } .ds-panel-title { font-size: 0.95rem; font-weight: 600; color: #F2F5FC; } .ds-panel-note { font-size: 0.78rem; color: #8D9EC6; }"
+    },
+    {
+      "name": "Stat Strip",
+      "kind": "custom",
+      "refersTo": "stat-strip",
+      "description": "One panel of hairline-separated headline figures.",
+      "html": "<div class=\"ds-stats\"><div class=\"ds-stat\"><div class=\"ds-stat-label\">Favourite</div><div class=\"ds-stat-value\">Arsenal</div><div class=\"ds-stat-foot\">38% title odds</div></div><div class=\"ds-stat\"><div class=\"ds-stat-label\">Articles</div><div class=\"ds-stat-value\">2,857</div><div class=\"ds-stat-foot\">scored</div></div></div>",
+      "css": ".ds-stats { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); background: #0F1A3B; border: 1px solid #22345F; border-radius: 14px; overflow: hidden; font-variant-numeric: tabular-nums; } .ds-stat { padding: 16px 20px; border-left: 1px solid #22345F; } .ds-stat:first-child { border-left: none; } .ds-stat-label { font-size: 0.78rem; color: #8D9EC6; font-weight: 500; } .ds-stat-value { font-size: 1.5rem; font-weight: 650; letter-spacing: -0.02em; color: #F2F5FC; margin-top: 4px; } .ds-stat-foot { font-size: 0.78rem; color: #B4C2E0; margin-top: 2px; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Pill for page-header status and counts.",
+      "html": "<span class=\"ds-chip\"><span class=\"ds-dot\"></span>API connected</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: #152349; border: 1px solid #22345F; color: #B4C2E0; font-size: 0.78rem; font-weight: 500; } .ds-dot { width: 7px; height: 7px; border-radius: 50%; background: #2fbf71; display: inline-block; }"
+    },
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Single button style: raised enamel; porcelain border on hover.",
+      "html": "<button class=\"ds-btn\">Refresh</button>",
+      "css": ".ds-btn { background: #152349; border: 1px solid #35508F; color: #F2F5FC; border-radius: 10px; font-weight: 500; padding: 8px 16px; font-family: inherit; cursor: pointer; transition: background 160ms cubic-bezier(0.22,1,0.36,1), border-color 160ms cubic-bezier(0.22,1,0.36,1); } .ds-btn:hover { border-color: #EAF0FF; background: #1b2c5a; color: #fff; } .ds-btn:focus-visible { outline: 2px solid #EAF0FF; outline-offset: 2px; border-radius: 6px; }"
+    },
+    {
+      "name": "Select Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Raised enamel field used for follow-a-club and filters.",
+      "html": "<input class=\"ds-input\" value=\"Follow a club\" />",
+      "css": ".ds-input { background: #152349; border: 1px solid #22345F; border-radius: 10px; color: #F2F5FC; padding: 8px 12px; font-family: inherit; font-size: 0.94rem; transition: border-color 160ms cubic-bezier(0.22,1,0.36,1); } .ds-input:hover { border-color: #35508F; } .ds-input:focus-visible { outline: 2px solid #EAF0FF; outline-offset: 2px; border-radius: 6px; }"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Sidebar link; active page is a filled porcelain ticket.",
+      "html": "<div style=\"background:#0F1A3B;padding:8px;width:200px\"><a class=\"ds-nav\" href=\"#\">Title race</a><a class=\"ds-nav ds-nav-active\" href=\"#\">Sentiment</a></div>",
+      "css": ".ds-nav { display: block; border-radius: 8px; padding: 8px 12px; color: #B4C2E0; font-weight: 500; font-size: 0.9rem; text-decoration: none; transition: background 160ms cubic-bezier(0.22,1,0.36,1), color 160ms cubic-bezier(0.22,1,0.36,1); } .ds-nav:hover { background: #152349; color: #F2F5FC; } .ds-nav-active, .ds-nav-active:hover { background: #EAF0FF; color: #0A1128; font-weight: 600; } .ds-nav:focus-visible { outline: 2px solid #EAF0FF; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ranked Route Row",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "Signature: numbered station roundel, ink bar, value. The followed row is filled and glowing.",
+      "html": "<div class=\"ds-rank ds-followed\"><span class=\"ds-roundel\" style=\"background:#ee9a73;border-color:#ee9a73;color:#0A1128\">1</span><span class=\"ds-rank-team\">Arsenal</span><span class=\"ds-track\"><span class=\"ds-fill\" style=\"width:80%;background:#ee9a73\"></span></span><span class=\"ds-rank-val\">38.2%</span></div><div class=\"ds-rank ds-dim\"><span class=\"ds-roundel\" style=\"border-color:#199e70\">2</span><span class=\"ds-rank-team\">Man City</span><span class=\"ds-track\"><span class=\"ds-fill\" style=\"width:55%;background:#199e70\"></span></span><span class=\"ds-rank-val\">26.0%</span></div>",
+      "css": ".ds-rank { display: grid; grid-template-columns: 24px minmax(0,1.4fr) minmax(0,2fr) 58px; align-items: center; gap: 12px; padding: 7px 8px; border-radius: 8px; background: #0F1A3B; font-variant-numeric: tabular-nums; } .ds-followed { background: rgba(234,240,255,0.07); } .ds-followed .ds-rank-team { font-weight: 700; } .ds-dim { opacity: 0.62; } .ds-roundel { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #8D9EC6; background: #0F1A3B; box-shadow: 0 0 0 3px #0F1A3B; display: grid; place-items: center; font-size: 0.74rem; font-weight: 700; color: #F2F5FC; } .ds-rank-team { color: #F2F5FC; font-size: 0.92rem; font-weight: 500; } .ds-track { height: 8px; background: #152349; border-radius: 4px; overflow: hidden; } .ds-fill { display: block; height: 100%; border-radius: 4px; } .ds-rank-val { color: #F2F5FC; font-size: 0.88rem; font-weight: 600; text-align: right; }"
+    },
+    {
+      "name": "Probability Rail",
+      "kind": "custom",
+      "refersTo": "prob-rail",
+      "description": "Home / draw / away split on the porcelain-to-enamel ramp.",
+      "html": "<div class=\"ds-rail\"><div style=\"flex:0.52;background:#E3EBFA;color:#0A1128\">52%</div><div style=\"flex:0.26;background:#6F86B8;color:#0A1128\">26%</div><div style=\"flex:0.22;background:#3F5599;color:#fff\">22%</div></div>",
+      "css": ".ds-rail { display: flex; height: 26px; border-radius: 6px; overflow: hidden; gap: 2px; background: #0F1A3B; font-variant-numeric: tabular-nums; } .ds-rail > div { display: grid; place-items: center; font-size: 0.78rem; font-weight: 700; min-width: 0; overflow: hidden; }"
+    },
+    {
+      "name": "Form Strip",
+      "kind": "custom",
+      "refersTo": "form-tile",
+      "description": "Last results as lettered tiles on the status colours.",
+      "html": "<div class=\"ds-form\"><span style=\"background:#0ca30c\">W</span><span style=\"background:#fab219\">D</span><span style=\"background:#d03b3b\">L</span></div>",
+      "css": ".ds-form { display: flex; gap: 6px; } .ds-form span { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: 0.8rem; color: #fff; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Midnight Transit",
+    "overview": "A transit map for the title race. The ground is midnight-blue enamel, labels are porcelain-white ticks, and clubs are bright metro-line inks. The one signature move is following a club: pick one in the sidebar and it burns brightest on every chart, list and fixture, while the other clubs recede to translucent ink, like a chosen line on a network map. Navigation, controls and layout stay standard; the world lends only type, palette, density and that one move.\n\nThe mood is calm, dense and legible: fixed rem type, hairline panels, tabular figures, almost no ornament. Depth is tonal, not shadowed. Glow is reserved for the followed club. The system rejects the generic dark dashboard with gradient-text glass.",
+    "keyCharacteristics": [
+      "Three enamel surface steps with hairline borders; no resting shadows.",
+      "Colour has one job each: selection, club identity, sentiment polarity, home/draw/away, win/draw/loss.",
+      "Followed club = lit ink plus glow; everyone else = same ink at 32% alpha.",
+      "Source Sans 3 with tabular numerals everywhere.",
+      "Thin-data states are labelled and left blank, never ranked or coloured as a finding."
+    ],
+    "rules": [
+      { "name": "The Porcelain Rule", "body": "Porcelain is selection UI only. It never encodes data. A followed club that has no ink of its own (outside the top five) is the single exception: it burns porcelain.", "section": "colors" },
+      { "name": "The One Meaning Rule", "body": "A hue carries one meaning. Club inks are never used for polarity or result; blue, green and red are kept out of the club set.", "section": "colors" },
+      { "name": "The Follow Rule", "body": "Anything that shows clubs must route its colour through focus_color, lit and dim: followed club lit (+38% toward white), others at 0.32 alpha, nobody followed means plain ink.", "section": "colors" },
+      { "name": "The Never Colour Alone Rule", "body": "Win, draw and loss always carry a letter and, in charts, a marker shape.", "section": "colors" },
+      { "name": "The Tabular Rule", "body": "Every figure uses tabular numerals so columns of odds and counts align.", "section": "typography" },
+      { "name": "The Sentence Case Rule", "body": "Labels are sentence case at normal tracking; hierarchy is built from size, weight and the three text greys.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Panels never carry shadows; hover only lifts the border to the strong hairline.", "section": "elevation" },
+      { "name": "The Glow Is Following Rule", "body": "Glow signals the followed club or live status. It is never decoration.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do route every club-showing chart through focus_color / lit / dim so the followed club burns and the field recedes.",
+      "Do keep porcelain (#EAF0FF) for selection and focus only.",
+      "Do pair W/D/L colour with the letter and a marker shape.",
+      "Do label sample size and leave thin-data cells blank rather than coloured.",
+      "Do keep club inks to the five set and the same club on the same ink on every page.",
+      "Do build depth from the three enamel steps and hairlines; keep motion short (160 to 200ms ease, 800 to 1100ms for count-up and bar growth) and honour prefers-reduced-motion.",
+      "Do use tabular numerals and sentence-case labels."
+    ],
+    "donts": [
+      "Don't use blue, green or red as a club ink; they mean positive sentiment, win and loss.",
+      "Don't use a club ink or porcelain for polarity or the home/draw/away ramp.",
+      "Don't add resting shadows, gradient text or glass effects.",
+      "Don't nest panels.",
+      "Don't reintroduce Atkinson Hyperlegible Next; its slashed zeros misread dates and percentages.",
+      "Don't hard-code new hexes inside chart code; add a token in theme.py first."
+    ]
+  }
+}
