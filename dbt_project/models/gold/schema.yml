@@ -38,18 +38,28 @@ models:
         description: "Canonical team name (FK to dim_team)"
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_name
       - name: matchweek_number
         description: "Matchweek number (FK to dim_matchweek)"
         tests:
           - not_null
       - name: result
         description: "Match result: W (win), D (draw), L (loss)"
+        tests:
+          - accepted_values:
+              values: ["W", "D", "L"]
       - name: goals_for
         description: "Goals scored by this team"
       - name: goals_against
         description: "Goals conceded by this team"
       - name: points
         description: "Points earned this matchweek (3/1/0)"
+        tests:
+          - accepted_values:
+              values: [0, 1, 3]
+              quote: false
       - name: avg_sentiment_score
         description: "Average sentiment score for this team this matchweek (-1 to +1)"
       - name: article_count

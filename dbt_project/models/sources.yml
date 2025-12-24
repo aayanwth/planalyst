@@ -10,6 +10,10 @@ sources:
     tables:
       - name: raw_matches
         description: "Raw Premier League match data from football-data.org API"
+        loaded_at_field: "ingested_at::timestamptz"
+        freshness:
+          warn_after: {count: 8, period: day}
+          error_after: {count: 30, period: day}
         columns:
           - name: id
             description: "Match ID from football-data.org"
@@ -35,7 +39,11 @@ sources:
             description: "Season start year (e.g. 2026)"
 
       - name: raw_news_articles
-        description: "Raw news articles from NewsAPI related to PL teams"
+        description: "Raw news articles (Guardian, GDELT, RSS fallback) related to PL teams"
+        loaded_at_field: "ingested_at::timestamptz"
+        freshness:
+          warn_after: {count: 2, period: day}
+          error_after: {count: 14, period: day}
         columns:
           - name: url
             description: "Article URL (used as primary key for deduplication)"

@@ -27,8 +27,14 @@ models:
         description: "Goals scored by away team"
       - name: home_result
         description: "W/D/L from home team perspective"
+        tests:
+          - accepted_values:
+              values: ["W", "D", "L"]
       - name: away_result
         description: "W/D/L from away team perspective"
+        tests:
+          - accepted_values:
+              values: ["W", "D", "L"]
       - name: home_points
         description: "Points earned by home team (3/1/0)"
       - name: away_points
@@ -52,3 +58,52 @@ models:
           - not_null
       - name: published_at
         description: "Publication timestamp"
+
+  - name: silver_fixtures
+    description: "Every fixture of the live season (played or not) with canonical team names and a UTC kickoff time."
+    columns:
+      - name: id
+        description: "Match ID from football-data.org"
+        tests:
+          - unique
+          - not_null
+      - name: match_date
+        description: "Kickoff time in UTC"
+        tests:
+          - not_null
+      - name: home_team
+        description: "Canonical home team name"
+        tests:
+          - not_null
+      - name: away_team
+        description: "Canonical away team name"
+        tests:
+          - not_null
+
+  - name: silver_article_teams
+    description: >
+      One row per (article, team): which clubs an article is about, the sign with which its
+      sentiment counts for each (polarity), and the team's next fixture at publication time.
+    columns:
+      - name: article_url
+        description: "Article URL (joins to silver_news_articles)"
+        tests:
+          - not_null
+      - name: team_name
+        description: "Canonical name of a club the article is about"
+        tests:
+          - not_null
+      - name: teams_mentioned
+        description: "How many clubs the article names (or 1 if it names none and falls back to its search team)"
+      - name: polarity
+        description: "+1 sentiment applies as scored, -1 inverted (opponent in a head-to-head article), 0 excluded (round-ups, ambiguous)"
+        tests:
+          - accepted_values:
+              values: [-1, 0, 1]
+              quote: false
+      - name: next_fixture_id
+        description: "The team's earliest fixture kicking off at or after publication (null after the last fixture)"
+        tests:
+          - relationships:
+              to: ref('silver_fixtures')
+              field: id

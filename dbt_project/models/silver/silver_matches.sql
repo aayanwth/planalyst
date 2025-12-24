@@ -22,7 +22,7 @@ deduplicated AS (
         id,
         matchday,
         status,
-        utc_date::timestamp AS match_date,
+        (utc_date AT TIME ZONE 'UTC') AS match_date,
         -- Standardize team names
         {{ map_team_name('home_team_name') }} AS home_team,
         {{ map_team_name('away_team_name') }} AS away_team,

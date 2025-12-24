@@ -2,7 +2,7 @@
     PLanalyst — Gold Layer: fact_team_sentiment_performance
 
     Fact table: one row per team per matchweek.
-    Combines match results with news sentiment scores.
+    Combines match results with pre-match news sentiment (see silver_article_teams).
 
     Columns: team, matchweek, avg_sentiment_score, article_count,
              result (W/D/L), goals_for, goals_against, points.
@@ -38,53 +38,27 @@ WITH team_match_results AS (
     FROM {{ ref('silver_matches') }}
 ),
 
--- Attribute each scored article to the team's nearest played matchweek
--- (article date on or before the match; otherwise the latest played MW).
-team_matchweeks AS (
-    SELECT home_team AS team_name, matchday AS matchweek_number, match_date
-    FROM {{ ref('silver_matches') }}
-    UNION ALL
-    SELECT away_team, matchday, match_date
-    FROM {{ ref('silver_matches') }}
-),
-
-articles_with_matchweek AS (
-    SELECT
-        sna.article_url,
-        sna.team_name,
-        COALESCE(
-            (
-                SELECT MIN(tm.matchweek_number)
-                FROM team_matchweeks tm
-                WHERE tm.team_name = sna.team_name
-                  AND tm.match_date >= sna.published_at
-            ),
-            (
-                SELECT MAX(tm.matchweek_number)
-                FROM team_matchweeks tm
-                WHERE tm.team_name = sna.team_name
-            )
-        ) AS matchweek_number,
-        ss.sentiment_label,
-        ss.sentiment_score
-    FROM {{ ref('silver_news_articles') }} sna
-    INNER JOIN {{ source('silver', 'silver_sentiment_scores') }} ss
-        ON sna.article_url = ss.article_url
-),
-
+-- Sentiment per team and matchweek. Each article counts for the team's NEXT fixture at the time
+-- it was published (see silver_article_teams), so it is always pre-match for that match.
+-- Polarity flips the sign for an opponent named in a head-to-head article and drops
+-- round-ups and ambiguous mentions (polarity 0). Only matchweeks that have since been played
+-- appear in this fact table, so sentiment for upcoming fixtures waits here until they finish.
 sentiment_data AS (
     SELECT
-        team_name,
-        matchweek_number,
-        AVG(CASE
-            WHEN sentiment_label = 'POSITIVE' THEN sentiment_score
-            WHEN sentiment_label = 'NEGATIVE' THEN -sentiment_score
+        at.team_name,
+        at.next_matchweek AS matchweek_number,
+        AVG(at.polarity * CASE
+            WHEN ss.sentiment_label = 'POSITIVE' THEN ss.sentiment_score
+            WHEN ss.sentiment_label = 'NEGATIVE' THEN -ss.sentiment_score
             ELSE 0
         END) AS avg_sentiment_score,
-        COUNT(article_url) AS article_count
-    FROM articles_with_matchweek
-    WHERE matchweek_number IS NOT NULL
-    GROUP BY team_name, matchweek_number
+        COUNT(DISTINCT at.article_url) AS article_count
+    FROM {{ ref('silver_article_teams') }} at
+    INNER JOIN {{ source('silver', 'silver_sentiment_scores') }} ss
+        ON at.article_url = ss.article_url
+    WHERE at.polarity <> 0
+      AND at.next_matchweek IS NOT NULL
+    GROUP BY at.team_name, at.next_matchweek
 ),
 
 -- Join results with sentiment
