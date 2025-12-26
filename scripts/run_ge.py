@@ -12,9 +12,14 @@ print("\n=== Task 3 checkpoint: intentional fail-fast ===")
 print("Forcing row-count max=1 on bronze.raw_matches (380 rows) to prove halt...")
 
 from great_expectations.expectations import ExpectTableRowCountToBeBetween
-from planalyst.quality.ge_config import get_context, get_or_create_batch_definition, get_or_create_table_asset
-from planalyst.config import SCHEMA_BRONZE
+
 import great_expectations as gx
+from planalyst.config import SCHEMA_BRONZE
+from planalyst.quality.ge_config import (
+    get_context,
+    get_or_create_batch_definition,
+    get_or_create_table_asset,
+)
 
 context = get_context()
 suite = context.suites.add(gx.ExpectationSuite(name="intentional_fail_suite"))

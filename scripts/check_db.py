@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, text
+
 from planalyst.config import SQLALCHEMY_CONNECTION_STRING
 
 e = create_engine(SQLALCHEMY_CONNECTION_STRING)
