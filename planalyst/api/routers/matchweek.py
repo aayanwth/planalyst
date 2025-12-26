@@ -8,11 +8,12 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 
 from planalyst.api.database import engine
+from planalyst.api.schemas import MatchweekSummary
 
 router = APIRouter()
 
 
-@router.get("/{matchweek_number}/summary")
+@router.get("/{matchweek_number}/summary", response_model=MatchweekSummary)
 def get_matchweek_summary(matchweek_number: int):
     """Get league-wide summary: sentiment vs results for a given matchweek."""
     query = text("""

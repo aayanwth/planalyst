@@ -5,7 +5,14 @@ Applies the trained prediction model to current live data.
 (Part of the per-matchweek job, not model training.)
 """
 
-from dagster import asset, AssetExecutionContext, Output, MetadataValue
+from dagster import (
+    AssetCheckResult,
+    AssetExecutionContext,
+    MetadataValue,
+    Output,
+    asset,
+    asset_check,
+)
 
 
 @asset(
@@ -35,3 +42,36 @@ def model_scoring(context: AssetExecutionContext) -> Output:
             ),
         },
     )
+
+
+@asset_check(
+    asset=model_scoring,
+    description="Title probabilities across all teams must sum to 1 (a dropped team or a stale table breaks this)",
+)
+def title_probabilities_sum_to_one() -> AssetCheckResult:
+    from sqlalchemy import create_engine
+
+    from planalyst.config import SQLALCHEMY_CONNECTION_STRING
+    from planalyst.quality.prediction_checks import (
+        probabilities_sum_to_one,
+        title_probability_total,
+    )
+
+    total = title_probability_total(create_engine(SQLALCHEMY_CONNECTION_STRING))
+    return AssetCheckResult(
+        passed=probabilities_sum_to_one(total), metadata={"total_probability": total}
+    )
+
+
+@asset_check(
+    asset=model_scoring,
+    description="Every unplayed fixture of the season must have a stored forecast",
+)
+def every_upcoming_fixture_has_a_forecast() -> AssetCheckResult:
+    from sqlalchemy import create_engine
+
+    from planalyst.config import SQLALCHEMY_CONNECTION_STRING
+    from planalyst.quality.prediction_checks import missing_fixture_forecasts
+
+    missing = missing_fixture_forecasts(create_engine(SQLALCHEMY_CONNECTION_STRING))
+    return AssetCheckResult(passed=missing == 0, metadata={"fixtures_without_forecast": missing})

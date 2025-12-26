@@ -8,7 +8,7 @@ from dagster import ConfigurableResource
 
 from planalyst.config import (
     FOOTBALL_DATA_API_KEY,
-    NEWS_API_KEY,
+    GUARDIAN_API_KEY,
     POSTGRES_CONNECTION_STRING,
 )
 
@@ -23,6 +23,6 @@ class FootballAPIResource(ConfigurableResource):
     api_key: str = FOOTBALL_DATA_API_KEY
 
 
-class NewsAPIResource(ConfigurableResource):
-    """NewsAPI key resource."""
-    api_key: str = NEWS_API_KEY
+class GuardianAPIResource(ConfigurableResource):
+    """Guardian Open Platform key resource (GDELT needs no key)."""
+    api_key: str = GUARDIAN_API_KEY

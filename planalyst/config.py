@@ -16,7 +16,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 # ── API Keys ─────────────────────────────────────────────────────────────────
 FOOTBALL_DATA_API_KEY = os.getenv("FOOTBALL_DATA_API_KEY", "")
-NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
+GUARDIAN_API_KEY = os.getenv("GUARDIAN_API_KEY", "")  # news also uses GDELT, which needs no key
 
 # ── PostgreSQL ───────────────────────────────────────────────────────────────
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
@@ -104,3 +104,7 @@ SCHEMA_TRAINING = "training"
 # dbt prefixes custom schemas with the profile schema ("public")
 DBT_SILVER_SCHEMA = "public_silver"
 DBT_GOLD_SCHEMA = "public_gold"
+
+# ── Pipeline behaviour ───────────────────────────────────────────────────────
+# Failing dbt tests stop the pipeline by default; set PLANALYST_DBT_TESTS_FATAL=false to only warn.
+DBT_TESTS_FATAL = os.getenv("PLANALYST_DBT_TESTS_FATAL", "true").strip().lower() != "false"

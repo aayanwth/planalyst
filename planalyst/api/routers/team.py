@@ -9,11 +9,12 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 
 from planalyst.api.database import engine
+from planalyst.api.schemas import TeamPerformance, TeamSentiment
 
 router = APIRouter()
 
 
-@router.get("/{team_name}/sentiment")
+@router.get("/{team_name}/sentiment", response_model=TeamSentiment)
 def get_team_sentiment(team_name: str):
     """Get sentiment trend for a team across matchweeks."""
     query = text("""
@@ -43,7 +44,7 @@ def get_team_sentiment(team_name: str):
     }
 
 
-@router.get("/{team_name}/performance")
+@router.get("/{team_name}/performance", response_model=TeamPerformance)
 def get_team_performance(team_name: str):
     """Get performance (results, goals, points) for a team across matchweeks."""
     query = text("""

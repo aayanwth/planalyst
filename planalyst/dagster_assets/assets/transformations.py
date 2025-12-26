@@ -6,7 +6,9 @@ Runs dbt seed + run as Dagster assets (Silver and Gold layers).
 
 from pathlib import Path
 
-from dagster import asset, AssetExecutionContext, Output, MetadataValue
+from dagster import AssetExecutionContext, MetadataValue, Output, asset
+
+from planalyst.config import DBT_TESTS_FATAL
 
 DBT_PROJECT_DIR = str(Path(__file__).resolve().parent.parent.parent.parent / "dbt_project")
 
@@ -43,7 +45,10 @@ def dbt_transformations(context: AssetExecutionContext) -> Output:
     ensure_scores_table()
     _run_dbt(["seed"], context)
     _run_dbt(["run"], context)
-    _run_dbt(["test"], context, fatal=False)
+    # Stale source data is a warning (the daily news job may simply not have run yet); failing
+    # dbt tests stop the pipeline unless PLANALYST_DBT_TESTS_FATAL=false.
+    _run_dbt(["source", "freshness"], context, fatal=False)
+    _run_dbt(["test"], context, fatal=DBT_TESTS_FATAL)
 
     return Output(
         value=None,
@@ -65,4 +70,8 @@ def gold_fact_refresh(context: AssetExecutionContext) -> Output:
     """Re-run gold models so fact_team_sentiment_performance includes sentiment."""
     context.log.info("Refreshing gold models with sentiment scores...")
     _run_dbt(["run", "--select", "fact_team_sentiment_performance"], context)
+    # The fact table was rebuilt after the first `dbt test`, so test it again.
+    _run_dbt(
+        ["test", "--select", "fact_team_sentiment_performance"], context, fatal=DBT_TESTS_FATAL
+    )
     return Output(value=None, metadata={"status": MetadataValue.text("OK")})

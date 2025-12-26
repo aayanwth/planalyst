@@ -9,19 +9,18 @@ Improvements over v1:
 - Hyperparameter tuning via cross-validation
 """
 
-import os
 import warnings
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_val_score
-from sklearn.metrics import accuracy_score, log_loss, classification_report
+from sklearn.metrics import accuracy_score, classification_report, log_loss
+from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.preprocessing import LabelEncoder
+from sqlalchemy import create_engine, text
 from xgboost import XGBClassifier
 
-from sqlalchemy import create_engine, text
-
-from planalyst.config import MODELS_DIR, SQLALCHEMY_CONNECTION_STRING, SCHEMA_TRAINING
+from planalyst.config import MODELS_DIR, SCHEMA_TRAINING, SQLALCHEMY_CONNECTION_STRING
+from planalyst.ml.elo import DEFAULT_ELO, EloParams, pre_match_long, run_elo
 
 warnings.filterwarnings("ignore")
 
@@ -44,103 +43,30 @@ FEATURE_COLUMNS = [
     "recent_win_streak",
 ]
 
-# ── Elo Rating System ────────────────────────────────────────────────────────
-DEFAULT_ELO = 1500
-K_FACTOR = 32
+# ── Elo ratings (implementation lives in planalyst.ml.elo) ───────────────────
+
+def compute_elo_ratings(
+    matches_df: pd.DataFrame, params: EloParams | None = None
+) -> dict[str, float]:
+    """Current Elo rating per team after replaying `matches_df`."""
+    return run_elo(matches_df, params)[0]
 
 
-def compute_elo_ratings(matches_df: pd.DataFrame) -> dict[str, float]:
+def add_elo_features(
+    team_df: pd.DataFrame, matches_df: pd.DataFrame, params: EloParams | None = None
+) -> pd.DataFrame:
     """
-    Compute Elo ratings from historical match results.
-    Returns a dict mapping team_name -> current Elo rating.
+    Add `elo_rating` (the team's rating BEFORE the match) and `elo_diff` (own minus opponent)
+    to the team-level frame, keyed on (season, matchday, team).
     """
-    elo = {}
-
-    for _, match in matches_df.sort_values(["season", "matchday"]).iterrows():
-        home = match["home_team_name"]
-        away = match["away_team_name"]
-
-        # Initialize if first time seeing the team
-        if home not in elo:
-            elo[home] = DEFAULT_ELO
-        if away not in elo:
-            elo[away] = DEFAULT_ELO
-
-        # Expected scores
-        exp_home = 1 / (1 + 10 ** ((elo[away] - elo[home]) / 400))
-        exp_away = 1 - exp_home
-
-        # Actual scores
-        if match["score_home"] > match["score_away"]:
-            actual_home, actual_away = 1.0, 0.0
-        elif match["score_home"] < match["score_away"]:
-            actual_home, actual_away = 0.0, 1.0
-        else:
-            actual_home, actual_away = 0.5, 0.5
-
-        # Update with goal difference margin multiplier
-        gd = abs(match["score_home"] - match["score_away"])
-        margin_mult = np.log(max(gd, 1) + 1)  # Bigger wins = bigger updates
-
-        elo[home] += K_FACTOR * margin_mult * (actual_home - exp_home)
-        elo[away] += K_FACTOR * margin_mult * (actual_away - exp_away)
-
-    return elo
-
-
-def add_elo_features(team_df: pd.DataFrame, matches_df: pd.DataFrame) -> pd.DataFrame:
-    """Add Elo rating and Elo difference features to the team-level dataframe."""
-    # Compute Elo ratings progressively per season
-    elo_history = {}  # (season, matchday, team) -> elo_at_that_point
-
-    elo = {}
-    for _, match in matches_df.sort_values(["season", "matchday"]).iterrows():
-        home = match["home_team_name"]
-        away = match["away_team_name"]
-
-        if home not in elo:
-            elo[home] = DEFAULT_ELO
-        if away not in elo:
-            elo[away] = DEFAULT_ELO
-
-        # Record current elo BEFORE the match
-        key_home = (match["season"], match["matchday"], home)
-        key_away = (match["season"], match["matchday"], away)
-        elo_history[key_home] = elo[home]
-        elo_history[key_away] = elo[away]
-
-        # Also record opponent's elo for diff calculation
-        elo_history[key_home + ("opp",)] = elo[away]
-        elo_history[key_away + ("opp",)] = elo[home]
-
-        # Update elo
-        exp_home = 1 / (1 + 10 ** ((elo[away] - elo[home]) / 400))
-        if match["score_home"] > match["score_away"]:
-            actual_home = 1.0
-        elif match["score_home"] < match["score_away"]:
-            actual_home = 0.0
-        else:
-            actual_home = 0.5
-
-        gd = abs(match["score_home"] - match["score_away"])
-        margin_mult = np.log(max(gd, 1) + 1)
-
-        elo[home] += K_FACTOR * margin_mult * (actual_home - exp_home)
-        elo[away] += K_FACTOR * margin_mult * ((1 - actual_home) - (1 - exp_home))
-
-    # Map elo values to the team dataframe
-    team_df["elo_rating"] = team_df.apply(
-        lambda r: elo_history.get((r["season"], r["matchday"], r["team"]), DEFAULT_ELO),
-        axis=1,
+    _, pre = run_elo(matches_df, params)
+    long = pre_match_long(pre).drop_duplicates(["season", "matchday", "team"])
+    out = team_df.drop(columns=["elo_rating", "elo_diff"], errors="ignore").merge(
+        long, on=["season", "matchday", "team"], how="left"
     )
-    team_df["elo_diff"] = team_df.apply(
-        lambda r: r["elo_rating"] - elo_history.get(
-            (r["season"], r["matchday"], r["team"], "opp"), DEFAULT_ELO
-        ),
-        axis=1,
-    )
-
-    return team_df
+    out["elo_rating"] = out["elo_rating"].fillna(DEFAULT_ELO)
+    out["elo_diff"] = (out["elo_rating"] - out["opp_elo"].fillna(DEFAULT_ELO)).astype(float)
+    return out.drop(columns=["opp_elo"])
 
 
 def add_advanced_features(team_df: pd.DataFrame) -> pd.DataFrame:
@@ -187,6 +113,49 @@ def align_to_next_match(df: pd.DataFrame) -> pd.DataFrame:
     return df  # last match of each season becomes NaN and is dropped later
 
 
+def prepare_training_frame(df: pd.DataFrame, matches_df: pd.DataFrame) -> pd.DataFrame:
+    """Pure step: add Elo + form features and align context to the next match."""
+    df = add_elo_features(df, matches_df)
+    df = add_advanced_features(df)
+    return align_to_next_match(df)
+
+
+# Chosen on a validation window (test = 2018-19, train = earlier seasons) that is disjoint
+# from the 2020-26 walk-forward evaluation in docs/model_evaluation.md; `python -m
+# planalyst.ml.tune` reproduces the comparison. The previous config (depth 6, 300 trees,
+# class-weighted) overfit: 1.034 validation log loss vs 0.947 here.
+MODEL_PARAMS = {
+    "n_estimators": 200,
+    "max_depth": 2,
+    "learning_rate": 0.03,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 30,
+    "reg_lambda": 5.0,
+    "objective": "multi:softprob",
+    "num_class": 3,
+    "eval_metric": "mlogloss",
+    "random_state": 42,
+    "verbosity": 0,
+}
+
+
+def make_model(**overrides) -> XGBClassifier:
+    """The production XGBoost configuration (optionally overridden, for tuning)."""
+    return XGBClassifier(**{**MODEL_PARAMS, **overrides})
+
+
+def fit_model(X_train: np.ndarray, y_train: np.ndarray, sample_weight=None, **overrides):
+    """
+    Fit on the natural class distribution. Inverse-frequency class weights were tried and
+    made probabilities worse (they inflate P(draw)), and the title simulator needs
+    calibrated probabilities more than it needs balanced accuracy.
+    """
+    model = make_model(**overrides)
+    model.fit(X_train, y_train, sample_weight=sample_weight)
+    return model
+
+
 def load_training_data() -> pd.DataFrame:
     """Load the pre-computed training features from the training schema."""
     engine = create_engine(SQLALCHEMY_CONNECTION_STRING)
@@ -225,16 +194,9 @@ def train_model(holdout_season: int | None = None):
     print(f"  Total rows: {len(df)}")
     print(f"  Seasons: {sorted(df['season'].unique())}")
 
-    # Add Elo features
-    print("  Computing Elo ratings...")
-    df = add_elo_features(df, matches_df)
-
-    # Add advanced form features
-    print("  Computing advanced features...")
-    df = add_advanced_features(df)
-
-    # Make venue/Elo features describe the match being predicted
-    df = align_to_next_match(df)
+    # Elo + form features, aligned so context describes the match being predicted
+    print("  Computing Elo and form features...")
+    df = prepare_training_frame(df, matches_df)
 
     # Prepare features and target
     feature_cols = [c for c in FEATURE_COLUMNS if c in df.columns]
@@ -251,44 +213,23 @@ def train_model(holdout_season: int | None = None):
     le = LabelEncoder()
     y_encoded = le.fit_transform(y)
 
-    # Time-based split: hold out a whole season (default: the latest) so rows
-    # from the same team-season never appear on both sides.
+    # Time-based split: evaluate on one whole season using only EARLIER seasons for training,
+    # so neither same-season rows nor future seasons leak into the reported metrics.
     seasons_available = sorted(df_clean["season"].unique())
     if not holdout_season or holdout_season not in seasons_available:
         holdout_season = seasons_available[-1]
-    train_mask = (df_clean["season"] != holdout_season).to_numpy()
-    test_mask = ~train_mask
+    train_mask = (df_clean["season"] < holdout_season).to_numpy()
+    test_mask = (df_clean["season"] == holdout_season).to_numpy()
+    if not train_mask.any():
+        raise ValueError(f"No seasons before {holdout_season} to train on.")
     X_train, X_test = X[train_mask], X[test_mask]
     y_train, y_test = y_encoded[train_mask], y_encoded[test_mask]
     print(f"  Holdout season: {holdout_season}-{holdout_season + 1}")
 
-    # Class weights for draw imbalance, computed on the training set only
-    counts = np.bincount(y_train, minlength=len(le.classes_))
-    class_weight = {i: len(y_train) / (len(le.classes_) * max(c, 1)) for i, c in enumerate(counts)}
-    w_train = np.array([class_weight[yi] for yi in y_train])
-
     print(f"  Train: {len(X_train)}, Test: {len(X_test)}")
 
-    # XGBoost Classifier with tuned hyperparameters
-    model = XGBClassifier(
-        n_estimators=300,
-        max_depth=6,
-        learning_rate=0.08,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        min_child_weight=3,
-        gamma=0.1,
-        reg_alpha=0.1,
-        reg_lambda=1.0,
-        objective="multi:softprob",
-        num_class=3,
-        eval_metric="mlogloss",
-        random_state=42,
-        verbosity=0,
-    )
-
     print("  Training XGBoost Classifier...")
-    model.fit(X_train, y_train, sample_weight=w_train)
+    model = fit_model(X_train, y_train)
 
     # Evaluate
     y_pred = model.predict(X_test)
@@ -297,20 +238,29 @@ def train_model(holdout_season: int | None = None):
     accuracy = accuracy_score(y_test, y_pred)
     logloss = log_loss(y_test, y_proba)
 
-    # Cross-validation on training set
-    cv_scores = cross_val_score(model, X_train, y_train, cv=5, scoring="accuracy")
+    # Cross-validation on the training set, grouped by season: each match appears twice
+    # (once per team), so random folds would leak the same match across train and validation.
+    train_seasons = df_clean["season"].to_numpy()[train_mask]
+    cv = GroupKFold(n_splits=min(5, len(np.unique(train_seasons))))
+    cv_scores = cross_val_score(
+        make_model(), X_train, y_train, cv=cv, groups=train_seasons, scoring="accuracy"
+    )
 
     print(f"\n  Test Accuracy: {accuracy:.4f}")
     print(f"  Log Loss: {logloss:.4f}")
     print(f"  CV Accuracy: {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
-    print(f"\n  Classification Report:")
+    print("\n  Classification Report:")
     print(classification_report(y_test, y_pred, target_names=le.classes_))
 
     # Feature importance
     importances = dict(zip(feature_cols, model.feature_importances_))
-    print(f"\n  Feature Importances:")
+    print("\n  Feature Importances:")
     for feat, imp in sorted(importances.items(), key=lambda x: -x[1]):
         print(f"    {feat}: {imp:.4f}")
+
+    # Metrics above come from the train-before-holdout model. The model that gets saved and
+    # served is refit on every available season, which is what predicts live fixtures.
+    model = fit_model(X, y_encoded)
 
     # Save model
     import joblib
@@ -322,6 +272,7 @@ def train_model(holdout_season: int | None = None):
     # Log to MLflow (best effort)
     try:
         import mlflow.xgboost
+
         from planalyst.tracking import configure_mlflow
 
         mlflow = configure_mlflow()
@@ -347,4 +298,4 @@ def train_model(holdout_season: int | None = None):
 
 
 if __name__ == "__main__":
-    model, le, features = train_model(holdout_season=2024)
+    model, le, features = train_model()

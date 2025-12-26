@@ -11,8 +11,7 @@ from datetime import datetime, timezone
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-from planalyst.config import SQLALCHEMY_CONNECTION_STRING, SCHEMA_SILVER
-
+from planalyst.config import SQLALCHEMY_CONNECTION_STRING
 
 # ── Model Configuration ─────────────────────────────────────────────────────
 # Primary model: CardiffNLP twitter-roberta-base for sentiment
@@ -93,10 +92,12 @@ def fetch_unscored_articles(engine) -> pd.DataFrame:
 def prepare_text_for_scoring(row) -> str:
     """Prepare article text for sentiment analysis. Prefer title + description."""
     parts = []
-    if row.get("title"):
-        parts.append(str(row["title"]))
-    if row.get("description"):
-        parts.append(str(row["description"]))
+    # DataFrame rows carry NULLs as NaN (truthy), so test with isna rather than truthiness;
+    # otherwise the literal word "nan" ends up in the text sent to the model.
+    for field in ("title", "description"):
+        value = row.get(field)
+        if value is not None and not pd.isna(value) and str(value).strip():
+            parts.append(str(value))
 
     text = " ".join(parts).strip()
 

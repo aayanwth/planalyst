@@ -14,6 +14,12 @@ tests three relationships with Spearman rank correlation:
 Team-matchweeks with no articles are dropped: the fact table fills missing
 sentiment with 0, which would otherwise be confused with "neutral coverage".
 
+How articles reach a team-matchweek (dbt model silver_article_teams): an article counts for each
+club it names, attributed to that club's NEXT fixture at publication time, so it is always
+pre-match for the match it is compared with. An opponent named in a head-to-head article gets the
+sign inverted, and round-ups naming three or more clubs are excluded. The fact table only holds
+matchweeks that have been played, so coverage of upcoming fixtures appears once they finish.
+
 Run:  python -m planalyst.analysis.sentiment_correlation
 """
 

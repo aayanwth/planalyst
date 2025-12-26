@@ -5,7 +5,7 @@ Wraps Great Expectations checkpoints as Dagster assets.
 Pipeline fails if quality checks don't pass.
 """
 
-from dagster import Failure, asset, AssetExecutionContext, Output, MetadataValue
+from dagster import AssetExecutionContext, Failure, MetadataValue, Output, asset
 
 
 @asset(

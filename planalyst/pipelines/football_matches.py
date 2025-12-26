@@ -23,7 +23,6 @@ from planalyst.config import (
     SCHEMA_BRONZE,
 )
 
-
 # ── API Client ───────────────────────────────────────────────────────────────
 
 class FootballDataClient:
@@ -161,7 +160,7 @@ def run_pipeline(matchday: int | None = None) -> None:
 
     print(f"\n🚀 Running football matches pipeline → {SCHEMA_BRONZE}.raw_matches")
     load_info = pipeline.run(resource)
-    print(f"✅ Load complete!")
+    print("✅ Load complete!")
     print(f"   {load_info}")
 
 

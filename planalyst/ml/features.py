@@ -11,12 +11,18 @@ Features:
 - Season position at matchweek N
 """
 
+from pathlib import Path
+
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-from pathlib import Path
-
-from planalyst.config import PROJECT_ROOT, SQLALCHEMY_CONNECTION_STRING, DBT_GOLD_SCHEMA, SCHEMA_TRAINING
+from planalyst.config import (
+    DBT_GOLD_SCHEMA,
+    PROJECT_ROOT,
+    SCHEMA_TRAINING,
+    SQLALCHEMY_CONNECTION_STRING,
+)
+from planalyst.ml.elo import DEFAULT_ELO
 
 
 def load_team_name_map() -> dict[str, str]:
@@ -117,10 +123,6 @@ def compute_features(team_df: pd.DataFrame) -> pd.DataFrame:
         group["season_goals_for"] = group["goals_for"].cumsum()
         group["season_goals_against"] = group["goals_against"].cumsum()
 
-        # Home/away win rates (expanding)
-        home_games = group[group["is_home"] == 1]
-        away_games = group[group["is_home"] == 0]
-
         group["games_played"] = range(1, len(group) + 1)
 
         # Win indicator
@@ -163,6 +165,13 @@ def compute_target(features_df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def build_feature_frame(raw_df: pd.DataFrame) -> pd.DataFrame:
+    """Pure step: raw match rows -> team-level rows with rolling features and next-match targets."""
+    team_df = unpivot_to_team_level(raw_df)
+    features_df = compute_features(team_df)
+    return compute_target(features_df)
+
+
 def build_training_features() -> pd.DataFrame:
     """Full pipeline: load data -> unpivot -> compute features -> add targets."""
     print("[Features] Building training feature set...")
@@ -175,13 +184,7 @@ def build_training_features() -> pd.DataFrame:
         print("  No historical data found. Run historical_matches pipeline first.")
         return pd.DataFrame()
 
-    team_df = unpivot_to_team_level(raw_df)
-    print(f"  Unpivoted to {len(team_df)} team-match rows")
-
-    features_df = compute_features(team_df)
-    print(f"  Computed features for {len(features_df)} rows")
-
-    training_df = compute_target(features_df)
+    training_df = build_feature_frame(raw_df)
     print(f"  Final training set: {len(training_df)} rows")
 
     # Write to training schema
@@ -195,6 +198,31 @@ def build_training_features() -> pd.DataFrame:
     print(f"  Written to {SCHEMA_TRAINING}.training_features")
 
     return training_df
+
+
+def load_played_matches(engine) -> pd.DataFrame:
+    """
+    Every finished match we know about: training history plus the live season, with team names
+    canonicalised so they line up with the Gold tables and the remaining fixtures.
+    """
+    mapping = load_team_name_map()
+    cols = "season, matchday, home_team_name, away_team_name, score_home, score_away"
+    with engine.connect() as conn:
+        hist = pd.read_sql(
+            text(f"SELECT {cols} FROM training.historical_matches WHERE score_home IS NOT NULL"),
+            conn,
+        )
+        live = pd.read_sql(
+            text(
+                f"SELECT {cols} FROM bronze.raw_matches "
+                "WHERE status = 'FINISHED' AND score_home IS NOT NULL"
+            ),
+            conn,
+        )
+    matches = pd.concat([hist, live], ignore_index=True)
+    for col in ("home_team_name", "away_team_name"):
+        matches[col] = matches[col].map(lambda n: canonicalize_team(n, mapping))
+    return matches
 
 
 def load_live_features() -> pd.DataFrame:
@@ -263,37 +291,13 @@ def load_live_features() -> pd.DataFrame:
 
     result = pd.concat(position_dfs, ignore_index=True)
 
-    # Current Elo from historical + live finished matches (canonical names)
-    result["elo_rating"] = 1500.0
-    result["elo_diff"] = 0.0
-    try:
-        from planalyst.ml.train import compute_elo_ratings
+    # Current Elo from historical + live finished matches (canonical names). A failure here
+    # must surface: silently defaulting every team to the same rating gives meaningless odds.
+    from planalyst.ml.train import compute_elo_ratings
 
-        mapping = load_team_name_map()
-        hist_query = text("""
-            SELECT season, matchday, home_team_name, away_team_name, score_home, score_away
-            FROM training.historical_matches
-            WHERE score_home IS NOT NULL
-        """)
-        live_query = text("""
-            SELECT season, matchday, home_team_name, away_team_name, score_home, score_away
-            FROM bronze.raw_matches
-            WHERE status = 'FINISHED' AND score_home IS NOT NULL
-        """)
-        with engine.connect() as conn:
-            hist = pd.read_sql(hist_query, conn)
-            live = pd.read_sql(live_query, conn)
-        matches = pd.concat([hist, live], ignore_index=True)
-        matches["home_team_name"] = matches["home_team_name"].map(
-            lambda n: canonicalize_team(n, mapping)
-        )
-        matches["away_team_name"] = matches["away_team_name"].map(
-            lambda n: canonicalize_team(n, mapping)
-        )
-        elo = compute_elo_ratings(matches)
-        result["elo_rating"] = result["team"].map(lambda t: elo.get(t, 1500.0))
-    except Exception as e:
-        print(f"  [Features] WARNING: Elo computation failed, defaulting to 1500 for all teams: {e}")
+    elo = compute_elo_ratings(load_played_matches(engine))
+    result["elo_rating"] = result["team"].map(lambda t: elo.get(t, DEFAULT_ELO))
+    result["elo_diff"] = 0.0  # overridden per fixture in predict.py
 
     return result
 
@@ -301,5 +305,5 @@ def load_live_features() -> pd.DataFrame:
 if __name__ == "__main__":
     df = build_training_features()
     if not df.empty:
-        print(f"\nSample of training features:")
+        print("\nSample of training features:")
         print(df[["season", "team", "matchday", "rolling_points_5", "season_position", "next_result"]].head(20))

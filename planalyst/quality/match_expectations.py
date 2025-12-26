@@ -10,7 +10,6 @@ Validates bronze.raw_matches table:
 
 import sys
 
-import great_expectations as gx
 from great_expectations.expectations import (
     ExpectColumnDistinctValuesToBeInSet,
     ExpectColumnValuesToBeBetween,
@@ -18,16 +17,15 @@ from great_expectations.expectations import (
     ExpectColumnValuesToNotBeNull,
     ExpectTableRowCountToBeBetween,
 )
-
 from sqlalchemy import create_engine, text
 
-from planalyst.config import PL_TEAMS_API, SQLALCHEMY_CONNECTION_STRING, SCHEMA_BRONZE
+import great_expectations as gx
+from planalyst.config import PL_TEAMS_API, SCHEMA_BRONZE, SQLALCHEMY_CONNECTION_STRING
 from planalyst.quality.ge_config import (
     get_context,
     get_or_create_batch_definition,
     get_or_create_table_asset,
 )
-
 
 # All valid match statuses from football-data.org API
 VALID_STATUSES = [

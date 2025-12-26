@@ -7,13 +7,12 @@ Sets up the GE data context for validating bronze layer data in PostgreSQL.
 from typing import Any
 
 import great_expectations as gx
-
 from planalyst.config import (
+    POSTGRES_DB,
     POSTGRES_HOST,
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
-    POSTGRES_DB,
 )
 
 

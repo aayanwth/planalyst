@@ -8,28 +8,31 @@ Validates bronze.raw_news_articles table:
 """
 
 import sys
+from datetime import datetime
+from email.utils import parsedate_to_datetime
 
-import great_expectations as gx
 from great_expectations.expectations import (
     ExpectColumnValuesToBeInSet,
     ExpectColumnValuesToNotBeNull,
     ExpectTableRowCountToBeBetween,
 )
-
-from datetime import datetime
-from email.utils import parsedate_to_datetime
-
 from sqlalchemy import create_engine, text
 
-from planalyst.config import PL_SEASON_START_DATE, PL_TEAMS_SHORT, SQLALCHEMY_CONNECTION_STRING, SCHEMA_BRONZE
+import great_expectations as gx
+from planalyst.config import (
+    PL_SEASON_START_DATE,
+    PL_TEAMS_SHORT,
+    SCHEMA_BRONZE,
+    SQLALCHEMY_CONNECTION_STRING,
+)
+
+# Also include TEAM_SEARCH_QUERIES values which may differ slightly
+from planalyst.pipelines.news_articles import TEAM_SEARCH_QUERIES
 from planalyst.quality.ge_config import (
     get_context,
     get_or_create_batch_definition,
     get_or_create_table_asset,
 )
-
-# Also include TEAM_SEARCH_QUERIES values which may differ slightly
-from planalyst.pipelines.news_articles import TEAM_SEARCH_QUERIES
 
 VALID_TEAM_QUERIES = list(set(TEAM_SEARCH_QUERIES.values()) | set(PL_TEAMS_SHORT))
 

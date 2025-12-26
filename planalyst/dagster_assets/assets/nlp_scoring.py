@@ -4,7 +4,7 @@ PLanalyst — Dagster: Asset Definition for NLP Sentiment Scoring
 Runs HuggingFace sentiment analysis on unscored articles.
 """
 
-from dagster import asset, AssetExecutionContext, Output, MetadataValue
+from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
 
 @asset(

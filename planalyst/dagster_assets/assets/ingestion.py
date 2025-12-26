@@ -4,7 +4,7 @@ PLanalyst — Dagster: Asset Definitions for Ingestion
 Wraps the dlt pipelines as Dagster software-defined assets.
 """
 
-from dagster import asset, AssetExecutionContext, Output, MetadataValue
+from dagster import AssetExecutionContext, MetadataValue, Output, asset
 
 
 @asset(
@@ -31,7 +31,7 @@ def bronze_matches(context: AssetExecutionContext) -> Output:
 
 @asset(
     group_name="bronze",
-    description="Ingest PL news articles from NewsAPI/RSS into bronze.raw_news_articles",
+    description="Ingest PL news articles from the Guardian and GDELT (RSS fallback) into bronze.raw_news_articles",
     kinds={"python", "dlt", "postgres"},
 )
 def bronze_news(context: AssetExecutionContext) -> Output:
