@@ -1,151 +1,100 @@
 """
 PLanalyst — Streamlit Page: Team Detail
 
-Per-team sentiment trend line and performance timeline.
+One club: its record, how its points built up, what it scored and conceded, how the press
+covered it, and what the model thinks of its season.
 """
 
-import streamlit as st
-import plotly.graph_objects as go
 import pandas as pd
+import streamlit as st
 
-from streamlit_app.utils import get_team_sentiment, get_team_performance
-
-
-# Teams list for the dropdown
-TEAMS = [
-    "AFC Bournemouth", "Arsenal", "Aston Villa", "Brentford",
-    "Brighton & Hove Albion", "Chelsea", "Coventry City", "Crystal Palace",
-    "Everton", "Fulham", "Hull City", "Ipswich Town", "Leeds United",
-    "Liverpool", "Manchester City", "Manchester United", "Newcastle United",
-    "Nottingham Forest", "Sunderland", "Tottenham Hotspur",
-]
+from streamlit_app import charts, theme
+from streamlit_app.utils import (
+    TEAMS,
+    get_team_performance,
+    get_team_sentiment,
+    get_title_predictions,
+)
 
 
-def render():
-    st.markdown("# 📊 Team Detail")
+def render() -> None:
+    theme.page_header("Team detail", "Results, form and press coverage for one club, with the model's view of its season.")
 
-    team = st.selectbox("Select Team", TEAMS, index=1)  # Default: Arsenal
-
+    follow = theme.followed()
+    team = st.selectbox(
+        "Club shown", TEAMS, index=TEAMS.index(follow) if follow else 1,
+        help="Starts on the club you follow. Changing it here only changes this page, not who you follow.",
+    )
     if not team:
         return
 
-    # Fetch data
     sentiment_data = get_team_sentiment(team)
     performance_data = get_team_performance(team)
-
     if sentiment_data is None or performance_data is None:
-        st.error("Cannot connect to the API. Make sure FastAPI is running on port 8000.")
+        theme.api_error()
         return
-
     if "error" in sentiment_data or "error" in performance_data:
-        st.warning(f"No data available for {team} yet.")
+        theme.empty_state(f"No data for {team} yet", "This club has no scored matches or articles so far.")
         return
 
-    # ── Performance Summary ──────────────────────────────────────────────
-    perf_list = performance_data.get("performance", [])
-    if perf_list:
-        latest = perf_list[-1]
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Total Points", latest["cumulative_points"])
-        with col2:
-            st.metric("Goal Difference", latest["cumulative_gd"])
-        with col3:
-            wins = sum(1 for p in perf_list if p["result"] == "W")
-            st.metric("Wins", wins)
-        with col4:
-            losses = sum(1 for p in perf_list if p["result"] == "L")
-            st.metric("Losses", losses)
+    perf = pd.DataFrame(performance_data.get("performance", []))
+    sent = pd.DataFrame(sentiment_data.get("sentiment_trend", []))
+    if perf.empty:
+        theme.empty_state(f"{team} hasn't played yet", "Results appear here after the first matchweek.")
+        return
 
-    st.divider()
+    predictions = pd.DataFrame((get_title_predictions() or {}).get("predictions", []))
+    ranked = predictions.sort_values("win_probability", ascending=False)["team"].tolist() if not predictions.empty else []
+    colors = theme.team_colors(ranked)
+    color = colors.get(team, "#9ec5f4")
+    mine = predictions[predictions["team"] == team].iloc[0] if not predictions.empty and (predictions["team"] == team).any() else None
 
-    # ── Dual axis chart: Sentiment + Points over matchweeks ──────────────
-    col_left, col_right = st.columns(2)
+    latest = perf.iloc[-1]
+    wins, draws, losses = (int((perf["result"] == r).sum()) for r in ("W", "D", "L"))
+    gf, ga = int(perf["goals_for"].sum()), int(perf["goals_against"].sum())
 
-    with col_left:
-        st.markdown("### Sentiment Trend")
-        sent_list = sentiment_data.get("sentiment_trend", [])
-        if sent_list:
-            df_sent = pd.DataFrame(sent_list)
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=df_sent["matchweek"],
-                y=df_sent["avg_sentiment_score"],
-                mode="lines+markers",
-                name="Avg Sentiment",
-                line=dict(color="#8b5cf6", width=3),
-                marker=dict(size=8),
-                fill="tozeroy",
-                fillcolor="rgba(139, 92, 246, 0.1)",
-            ))
-            fig.update_layout(
-                template="plotly_dark",
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                xaxis_title="Matchweek",
-                yaxis_title="Sentiment Score",
-                height=350,
-                font=dict(family="Inter"),
-            )
-            st.plotly_chart(fig, use_container_width=True)
+    theme.team_hero(
+        team,
+        [
+            theme.chip("Played", str(len(perf))),
+            theme.chip("Form", " ".join(perf["result"].tail(5))),
+            *([theme.chip("Title", f"{mine['win_probability']:.1%}")] if mine is not None else []),
+        ],
+    )
+
+    theme.stat_strip(
+        [
+            ("Points", theme.counted(int(latest["cumulative_points"])), f"after {len(perf)} matches"),
+            ("Record", f"{wins}-{draws}-{losses}", "wins, draws, losses"),
+            ("Goals", f"{gf}:{ga}", f"goal difference {int(latest['cumulative_gd']):+d}"),
+            ("Title chance", "n/a" if mine is None else f"{mine['win_probability']:.1%}",
+             "" if mine is None else f"top 4 {mine['top4_probability']:.0%} · relegation {mine['relegation_probability']:.0%}"),
+        ]
+    )
+
+    left, right = st.columns([4, 8], gap="medium")
+    with left:
+        with theme.panel("Form", "oldest → newest"):
+            theme.form_strip(perf["result"].tolist())
+            theme.show(charts.result_donut(perf, height=240), key="td-donut")
+    with right:
+        with theme.panel("Points accumulation"):
+            theme.show(charts.points_line(perf, color, height=326), key="td-points")
+
+    left, right = st.columns(2, gap="medium")
+    with left:
+        with theme.panel("Goals for and against", "per match"):
+            theme.show(charts.goals_chart(perf, color), key="td-goals")
+    with right:
+        with theme.panel("Press sentiment", "hollow dot = under 8 articles"):
+            if sent.empty:
+                theme.empty_state("No coverage yet", f"No scored articles mention {team} so far.")
+            else:
+                theme.show(charts.sentiment_trend(sent, color), key="td-sent")
+
+    with theme.panel("Did coverage follow the result?", "needs 3+ matchweeks with 8+ articles"):
+        fig = charts.sentiment_vs_goal_diff(perf, sent) if not sent.empty else None
+        if fig is None:
+            theme.empty_state("Not enough coverage to compare", "Once three matchweeks have enough articles, this plots sentiment against each match's goal difference.")
         else:
-            st.info("No sentiment data available yet.")
-
-    with col_right:
-        st.markdown("### Points Accumulation")
-        if perf_list:
-            df_perf = pd.DataFrame(perf_list)
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=df_perf["matchweek"],
-                y=df_perf["cumulative_points"],
-                mode="lines+markers",
-                name="Cumulative Points",
-                line=dict(color="#22c55e", width=3),
-                marker=dict(size=8),
-                fill="tozeroy",
-                fillcolor="rgba(34, 197, 94, 0.1)",
-            ))
-            fig.update_layout(
-                template="plotly_dark",
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                xaxis_title="Matchweek",
-                yaxis_title="Cumulative Points",
-                height=350,
-                font=dict(family="Inter"),
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-    # ── Results timeline ─────────────────────────────────────────────────
-    st.divider()
-    st.markdown("### Match Results")
-    if perf_list:
-        df_results = pd.DataFrame(perf_list)
-        result_colors = {"W": "#22c55e", "D": "#f59e0b", "L": "#ef4444"}
-        df_results["color"] = df_results["result"].map(result_colors)
-
-        fig = go.Figure(data=[
-            go.Bar(
-                x=df_results["matchweek"],
-                y=df_results["points"],
-                marker_color=df_results["color"],
-                text=df_results["result"],
-                textposition="inside",
-                hovertext=[
-                    f"MW{r['matchweek']}: {r['goals_for']}-{r['goals_against']} ({r['result']})"
-                    for _, r in df_results.iterrows()
-                ],
-            )
-        ])
-        fig.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            xaxis_title="Matchweek",
-            yaxis_title="Points",
-            height=300,
-            font=dict(family="Inter"),
-            showlegend=False,
-        )
-        st.plotly_chart(fig, use_container_width=True)
+            theme.show(fig, key="td-corr")

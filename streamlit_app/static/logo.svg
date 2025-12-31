@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="190" height="40" viewBox="0 0 190 40" fill="none">
+  <rect x="2" y="4" width="32" height="32" rx="9" fill="#EAF0FF"/>
+  <path d="M10 28V21M16 28V12M22 28v-7M28 28V16" stroke="#0A1128" stroke-width="2.6" stroke-linecap="round"/>
+  <text x="44" y="27" font-family="'Source Sans 3', 'Segoe UI', Arial, sans-serif" font-size="19" font-weight="600" fill="#F2F5FC" letter-spacing="-0.3">PLanalyst</text>
+</svg>

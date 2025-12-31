@@ -1,8 +1,8 @@
 """
 PLanalyst — Streamlit Dashboard: Main App
 
-Multi-page Streamlit app that visualizes Premier League sentiment
-analysis and title predictions via the FastAPI backend.
+Multi-page dashboard over the FastAPI serving layer: title odds, matchweek sentiment,
+team detail, fixture forecasts and the model's own evaluation.
 """
 
 import sys
@@ -13,93 +13,85 @@ import streamlit as st
 # Make `streamlit_app` importable without installing the package
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from streamlit_app import theme  # noqa: E402
+from streamlit_app.utils import NO_FOLLOW, TEAMS, api_is_up, get_clubs  # noqa: E402
+
 st.set_page_config(
-    page_title="PLanalyst - Premier League Sentiment & Predictions",
-    page_icon="⚽",
+    page_title="PLanalyst · Premier League odds & sentiment",
+    page_icon=":material/bar_chart:",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
-
-# ── Custom CSS for premium look ───────────────────────────────────────────────
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-    * { font-family: 'Inter', sans-serif; }
-
-    .main { background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 50%, #0d1117 100%); }
-
-    .stApp { background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 50%, #0d1117 100%); }
-
-    h1, h2, h3 {
-        background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 700;
-    }
-
-    .metric-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 20px;
-        backdrop-filter: blur(10px);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
-    }
-
-    .team-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 12px;
-        background: rgba(99, 102, 241, 0.1);
-        border-radius: 8px;
-        font-weight: 500;
-    }
-
-    .positive { color: #22c55e; }
-    .negative { color: #ef4444; }
-    .neutral { color: #94a3b8; }
-
-    .stMetric { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px; }
-
-    div[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #111827 0%, #1e1b4b 100%);
-    }
-</style>
-""", unsafe_allow_html=True)
+theme.inject_css()
+theme.set_clubs(get_clubs())  # crests and short names for every club, from the API
 
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
-st.sidebar.markdown("# ⚽ PLanalyst")
-st.sidebar.markdown("*Premier League Sentiment & Predictions*")
-st.sidebar.divider()
+def overview():
+    from streamlit_app.views.overview import render
 
-page = st.sidebar.radio(
-    "Navigate",
-    ["🏟️ Matchweek Overview", "📊 Team Detail", "🏆 Title Race"],
-    index=0,
-)
-
-st.sidebar.divider()
-st.sidebar.markdown("---")
-st.sidebar.caption("Data: football-data.org + BBC Sport RSS")
-st.sidebar.caption("NLP: CardiffNLP twitter-roberta")
-st.sidebar.caption("Season: 2026-2027")
-
-
-# ── Page Routing ──────────────────────────────────────────────────────────────
-if page == "🏟️ Matchweek Overview":
-    from streamlit_app.views.sentiment_overview import render
     render()
-elif page == "📊 Team Detail":
-    from streamlit_app.views.team_detail import render
-    render()
-elif page == "🏆 Title Race":
+
+
+def title_race():
     from streamlit_app.views.title_race import render
+
     render()
+
+
+def matchweek():
+    from streamlit_app.views.sentiment_overview import render
+
+    render()
+
+
+def team_detail():
+    from streamlit_app.views.team_detail import render
+
+    render()
+
+
+def fixtures():
+    from streamlit_app.views.fixtures import render
+
+    render()
+
+
+def model_evaluation():
+    from streamlit_app.views.model_evaluation import render
+
+    render()
+
+
+STATIC = Path(__file__).resolve().parent / "static"
+st.logo(str(STATIC / "logo.svg"), icon_image=str(STATIC / "mark.svg"), size="large")
+
+navigation = st.navigation(
+    [
+        st.Page(overview, title="Overview", icon=":material/space_dashboard:", default=True),
+        st.Page(title_race, title="Title race", icon=":material/emoji_events:", url_path="title-race"),
+        st.Page(matchweek, title="Sentiment", icon=":material/forum:", url_path="matchweek"),
+        st.Page(team_detail, title="Team detail", icon=":material/shield:", url_path="team"),
+        st.Page(fixtures, title="Fixtures", icon=":material/sports_soccer:", url_path="fixtures"),
+        st.Page(model_evaluation, title="Evaluation", icon=":material/science:", url_path="evaluation"),
+    ]
+)
+
+with st.sidebar:
+    st.markdown('<div class="side-label">Follow a club</div>', unsafe_allow_html=True)
+    st.selectbox(
+        "Follow a club", [NO_FOLLOW, *TEAMS], key="follow", label_visibility="collapsed",
+        help="The club you follow burns brightest on every chart while the rest of the field recedes.",
+    )
+    if theme.followed():
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:10px;padding:10px 4px 0">{theme.crest(theme.followed(), 36)}'
+            f'<span style="color:var(--text);font-weight:600">{theme.followed()}</span></div>',
+            unsafe_allow_html=True,
+        )
+    st.markdown(
+        f'<div style="padding:18px 4px 0"><span class="chip">{theme.api_status_chip(api_is_up())}</span></div>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Results: football-data.org · News: Guardian, GDELT · Sentiment: CardiffNLP RoBERTa · Season 2026-27")
+
+navigation.run()
