@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1, "code": 2645195, "event": 1,
+    "kickoff_time": "2026-08-21T19:00:00Z",
+    "finished": false, "started": false,
+    "team_h": 1, "team_a": 6,
+    "team_h_score": null, "team_a_score": null,
+    "team_h_difficulty": 4, "team_a_difficulty": 5,
+    "minutes": 0, "provisional_start_time": false,
+    "stats": []
+  },
+  {
+    "id": 2, "code": 2645196, "event": 1,
+    "kickoff_time": "2026-08-22T14:00:00Z",
+    "finished": false, "started": false,
+    "team_h": 14, "team_a": 1,
+    "team_h_score": null, "team_a_score": null,
+    "team_h_difficulty": 5, "team_a_difficulty": 4,
+    "minutes": 0, "provisional_start_time": false,
+    "stats": []
+  },
+  {
+    "id": 3, "code": 2645197, "event": 2,
+    "kickoff_time": "2026-08-28T19:00:00Z",
+    "finished": false, "started": false,
+    "team_h": 6, "team_a": 14,
+    "team_h_score": null, "team_a_score": null,
+    "team_h_difficulty": 4, "team_a_difficulty": 4,
+    "minutes": 0, "provisional_start_time": false,
+    "stats": []
+  },
+  {
+    "id": 4, "code": 2645198, "event": 2,
+    "kickoff_time": "2026-08-29T14:00:00Z",
+    "finished": false, "started": false,
+    "team_h": 1, "team_a": 14,
+    "team_h_score": null, "team_a_score": null,
+    "team_h_difficulty": 4, "team_a_difficulty": 5,
+    "minutes": 0, "provisional_start_time": false,
+    "stats": []
+  },
+  {
+    "id": 5, "code": 2645199, "event": 3,
+    "kickoff_time": null,
+    "finished": false, "started": false,
+    "team_h": 14, "team_a": 6,
+    "team_h_score": null, "team_a_score": null,
+    "team_h_difficulty": 4, "team_a_difficulty": 4,
+    "minutes": 0, "provisional_start_time": true,
+    "stats": []
+  },
+  {
+    "id": 6, "code": 2645200, "event": 3,
+    "kickoff_time": "2026-09-04T19:00:00Z",
+    "finished": false, "started": false,
+    "team_h": 6, "team_a": 1,
+    "team_h_score": null, "team_a_score": null,
+    "team_h_difficulty": 5, "team_a_difficulty": 4,
+    "minutes": 0, "provisional_start_time": false,
+    "stats": []
+  }
+]

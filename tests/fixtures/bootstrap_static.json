@@ -1,0 +1,85 @@
+{
+  "events": [
+    {
+      "id": 1, "name": "Gameweek 1", "deadline_time": "2026-08-21T17:30:00Z",
+      "finished": false, "is_previous": false, "is_current": false, "is_next": true
+    },
+    {
+      "id": 2, "name": "Gameweek 2", "deadline_time": "2026-08-28T17:30:00Z",
+      "finished": false, "is_previous": false, "is_current": false, "is_next": false
+    }
+  ],
+  "teams": [
+    {
+      "id": 1, "code": 3, "name": "Arsenal", "short_name": "ARS",
+      "strength_overall_home": 4, "strength_overall_away": 5,
+      "strength_attack_home": 0, "strength_attack_away": 0,
+      "strength_defence_home": 0, "strength_defence_away": 0,
+      "pulse_id": 1, "played": 0, "points": 0
+    },
+    {
+      "id": 6, "code": 8, "name": "Chelsea", "short_name": "CHE",
+      "strength_overall_home": 4, "strength_overall_away": 4,
+      "strength_attack_home": 0, "strength_attack_away": 0,
+      "strength_defence_home": 0, "strength_defence_away": 0,
+      "pulse_id": 4, "played": 0, "points": 0
+    },
+    {
+      "id": 14, "code": 14, "name": "Liverpool", "short_name": "LIV",
+      "strength_overall_home": 4, "strength_overall_away": 4,
+      "strength_attack_home": 0, "strength_attack_away": 0,
+      "strength_defence_home": 0, "strength_defence_away": 0,
+      "pulse_id": 10, "played": 0, "points": 0
+    }
+  ],
+  "elements": [
+    {
+      "id": 1, "code": 154561, "first_name": "David", "second_name": "Raya",
+      "web_name": "Raya", "team": 1, "element_type": 1,
+      "now_cost": 60, "status": "a", "total_points": 162,
+      "points_per_game": "4.4", "selected_by_percent": "31.1", "form": "0.0",
+      "chance_of_playing_next_round": null, "news": ""
+    },
+    {
+      "id": 10, "code": 223340, "first_name": "Bukayo", "second_name": "Saka",
+      "web_name": "Saka", "team": 1, "element_type": 3,
+      "now_cost": 105, "status": "a", "total_points": 171,
+      "points_per_game": "5.5", "selected_by_percent": "45.2", "form": "0.0",
+      "chance_of_playing_next_round": null, "news": ""
+    },
+    {
+      "id": 200, "code": 200439, "first_name": "Cole", "second_name": "Palmer",
+      "web_name": "Palmer", "team": 6, "element_type": 3,
+      "now_cost": 110, "status": "a", "total_points": 244,
+      "points_per_game": "7.0", "selected_by_percent": "55.0", "form": "0.0",
+      "chance_of_playing_next_round": null, "news": ""
+    },
+    {
+      "id": 300, "code": 176297, "first_name": "Mohamed", "second_name": "Salah",
+      "web_name": "Salah", "team": 14, "element_type": 3,
+      "now_cost": 130, "status": "a", "total_points": 253,
+      "points_per_game": "6.8", "selected_by_percent": "60.0", "form": "0.0",
+      "chance_of_playing_next_round": null, "news": ""
+    },
+    {
+      "id": 400, "code": 433919, "first_name": "Kai", "second_name": "Havertz",
+      "web_name": "Havertz", "team": 1, "element_type": 4,
+      "now_cost": 80, "status": "a", "total_points": 140,
+      "points_per_game": "4.0", "selected_by_percent": "20.0", "form": "0.0",
+      "chance_of_playing_next_round": null, "news": ""
+    },
+    {
+      "id": 500, "code": 232760, "first_name": "Nicolas", "second_name": "Jackson",
+      "web_name": "Jackson", "team": 6, "element_type": 4,
+      "now_cost": 75, "status": "a", "total_points": 130,
+      "points_per_game": "3.8", "selected_by_percent": "18.0", "form": "0.0",
+      "chance_of_playing_next_round": null, "news": ""
+    }
+  ],
+  "element_types": [
+    {"id": 1, "singular_name": "Goalkeeper", "singular_name_short": "GKP"},
+    {"id": 2, "singular_name": "Defender", "singular_name_short": "DEF"},
+    {"id": 3, "singular_name": "Midfielder", "singular_name_short": "MID"},
+    {"id": 4, "singular_name": "Forward", "singular_name_short": "FWD"}
+  ]
+}
